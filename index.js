@@ -21,70 +21,36 @@ const openai = new OpenAI({
   },
 });
 
-// Static mock user profiles
-const getUserProfile = (section) => {
-  switch (section) {
-    case 'appearance':
-      return {
-        skinColor: 'medium brown',
-        skinTone: 'warm',
-        skinType: 'dry',
-        hairType: 'curly',
-        goal: 'reduce acne and brighten complexion',
-      };
-    case 'exercise':
-      return {
-        height: '175 cm',
-        weight: '70 kg',
-        fitnessGoal: 'build muscle and improve endurance',
-        activityLevel: 'moderate',
-      };
-    case 'food':
-      return {
-        dietType: 'vegetarian',
-        allergies: 'none',
-        calorieGoal: '2200 kcal/day',
-        goal: 'balanced nutrition for active lifestyle',
-      };
-    default:
-      return {};
-  }
+// Static user profile for Nitheesh
+const userProfile = {
+  name: 'Nitheesh',
+  age: 21,
+  height: 150,
+  weight: 63,
+  role: 'student',
+  activityLevel: 'active',
+  dietType: 'non-veg',
+  email: 'praveen1@gmail.com',
+  createdAt: '2025-04-19T21:59:53.660Z',
+  updatedAt: '2025-04-20T02:53:47.599Z',
 };
 
-// Section-specific system prompt builder
-const getSystemPrompt = (section, profile) => {
-  switch (section) {
-    case 'appearance':
-      return `You are a certified dermatologist and beauty advisor.
-The user has the following appearance profile:
-- Skin Color: ${profile.skinColor}
-- Skin Tone: ${profile.skinTone}
-- Skin Type: ${profile.skinType}
-- Hair Type: ${profile.hairType}
-- Appearance Goal: ${profile.goal}
-
-Provide professional, in-depth advice related to skincare, haircare, and beauty routines.`;
-    case 'exercise':
-      return `You are a certified personal fitness coach.
-The user's exercise profile is:
-- Height: ${profile.height}
-- Weight: ${profile.weight}
-- Fitness Goal: ${profile.fitnessGoal}
-- Activity Level: ${profile.activityLevel}
-
-Give scientifically-backed, structured workout plans and tips tailored to the user’s fitness profile.`;
-    case 'food':
-      return `You are a certified nutritionist.
-The user's food profile:
-- Diet Type: ${profile.dietType}
-- Allergies: ${profile.allergies}
-- Calorie Goal: ${profile.calorieGoal}
-- Nutrition Goal: ${profile.goal}
-
-Provide professional, customized meal plans and food suggestions to help meet the user’s dietary goals.`;
-    default:
-      return `You are a helpful assistant.`;
+// Unified system prompt for both food and exercise
+const getSystemPrompt = (section) => {
+  if (section !== 'common') {
+    return `You are a helpful assistant.`;
   }
+
+  return `You are a certified fitness coach and professional nutritionist.
+The user, ${userProfile.name}, is a ${userProfile.age}-year-old ${userProfile.role}.
+Here is the user profile:
+- Height: ${userProfile.height} cm
+- Weight: ${userProfile.weight} kg
+- Activity Level: ${userProfile.activityLevel}
+- Diet Type: ${userProfile.dietType}
+
+Based on this information, provide a personalized daily fitness routine and a complete non-vegetarian meal plan.
+Ensure the advice supports an active lifestyle and aligns with the user's age and goals. Be precise, professional, and helpful.`;
 };
 
 app.post('/api/chat', async (req, res) => {
@@ -94,8 +60,7 @@ app.post('/api/chat', async (req, res) => {
     return res.status(400).json({ error: 'Missing message or section.' });
   }
 
-  const profile = getUserProfile(section);
-  const systemPrompt = getSystemPrompt(section, profile);
+  const systemPrompt = getSystemPrompt(section);
 
   try {
     const completion = await openai.chat.completions.create({
